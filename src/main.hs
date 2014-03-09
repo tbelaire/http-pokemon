@@ -13,14 +13,45 @@ import qualified Data.ByteString.Lazy as L
 import Data.Aeson
 import Network.HTTP.Conduit
 
+data MoveSummary = MoveSummary {
+   move_summary_name :: Text,
+   move_summary_uri :: Text
+} deriving (Eq, Show)
+
+instance FromJSON MoveSummary where
+    parseJSON (Object v) = MoveSummary <$>
+            v .: "name" <*>
+            v .: "resource_uri"
+    parseJSON _ = mzero
+
+instance ToJSON MoveSummary where
+    toJSON (MoveSummary name uri) = object [
+        "name" .= name,
+        "resource_uri" .= uri]
+
+data MoveFull = MoveFull {
+    move_full_name :: Text,
+    move_full_accuracy :: Int,
+    move_full_power :: Int
+}
+
+instance FromJSON MoveFull where
+    parseJSON (Object v) = MoveFull <$>
+            v .: "name" <*>
+            v .: "accuracy" <*>
+            v .: "power"
+    parseJSON _ = mzero
+                            
+
 data Pokemon = Pokemon {
-    name :: Text,
+    pokemon_name :: Text,
     hp :: Int,
     attack :: Int,
     defense :: Int,
     sp_atk :: Int,
     sp_def :: Int,
-    speed :: Int
+    speed :: Int,
+    moves :: [MoveSummary]
     } deriving (Eq, Show)
 
 instance FromJSON Pokemon where
@@ -31,17 +62,19 @@ instance FromJSON Pokemon where
                            v .: "defense" <*>
                            v .: "sp_atk" <*>
                            v .: "sp_def" <*>
-                           v .: "speed"
+                           v .: "speed" <*>
+                           v .: "moves"
     parseJSON _ = mzero
 
 instance ToJSON Pokemon where
-    toJSON p = object [ "name" .= name p,
+    toJSON p = object [ "name" .= pokemon_name p,
                         "hp" .= hp p,
                         "attack" .= attack p,
                         "defense" .= defense p,
                         "sp_atk" .= sp_atk p,
                         "sp_def" .= sp_def p,
-                        "speed" .= speed p]
+                        "speed" .= speed p,
+                        "moves" .= moves p]
 
 charmander = "{\"name\":\"Charmander\",\"speed\":65,\"defense\":43,\"sp_atk\":60,\"attack\":52,\"hp\":39,\"sp_def\":50}"
 
@@ -58,8 +91,8 @@ main = do pokemon_id <- randomRIO (0,251)
           case maybe_poke of
             Left msg -> putStr $ "Failed to parse" ++ msg
             Right p -> do
-              print $ encode p
-              putStr $ unpack (name p)
+              L.putStrLn $ encode p
+              putStrLn $ unpack (pokemon_name p)
 
 
 

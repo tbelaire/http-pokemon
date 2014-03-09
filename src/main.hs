@@ -18,16 +18,6 @@ data MoveSummary = MoveSummary {
    move_summary_uri :: Text
 } deriving (Eq, Show)
 
-instance FromJSON MoveSummary where
-    parseJSON (Object v) = MoveSummary <$>
-            v .: "name" <*>
-            v .: "resource_uri"
-    parseJSON _ = mzero
-
-instance ToJSON MoveSummary where
-    toJSON (MoveSummary name uri) = object [
-        "name" .= name,
-        "resource_uri" .= uri]
 
 data MoveFull = MoveFull {
     move_full_name :: Text,
@@ -35,13 +25,6 @@ data MoveFull = MoveFull {
     move_full_power :: Int
 }
 
-instance FromJSON MoveFull where
-    parseJSON (Object v) = MoveFull <$>
-            v .: "name" <*>
-            v .: "accuracy" <*>
-            v .: "power"
-    parseJSON _ = mzero
-                            
 
 data Pokemon = Pokemon {
     pokemon_name :: Text,
@@ -53,6 +36,49 @@ data Pokemon = Pokemon {
     speed :: Int,
     moves :: [MoveSummary]
     } deriving (Eq, Show)
+
+charmander = "{\"name\":\"Charmander\",\"speed\":65,\"defense\":43,\"sp_atk\":60,\"attack\":52,\"hp\":39,\"sp_def\":50}"
+
+api_base_url = "http://pokeapi.co/"
+
+construct_pokemon_url id = api_base_url ++ "api/v1/pokemon/" ++ show id ++ "/"
+
+get_pokemon :: Int -> IO (Either String Pokemon)
+get_pokemon id = fmap eitherDecode $ simpleHttp (construct_pokemon_url id)
+
+main = do pokemon_id <- randomRIO (0,251)
+          putStrLn $ "Looking up: " ++ show (pokemon_id :: Int)
+          maybe_poke <- get_pokemon pokemon_id 
+          case maybe_poke of
+            Left msg -> putStr $ "Failed to parse" ++ msg
+            Right p -> do
+              L.putStrLn $ encode p
+              putStrLn $ unpack (pokemon_name p)
+
+
+instance FromJSON MoveSummary where
+    parseJSON (Object v) = MoveSummary <$>
+            v .: "name" <*>
+            v .: "resource_uri"
+    parseJSON _ = mzero
+
+instance ToJSON MoveSummary where
+    toJSON (MoveSummary name uri) = object [
+        "name" .= name,
+        "resource_uri" .= uri]
+
+instance FromJSON MoveFull where
+    parseJSON (Object v) = MoveFull <$>
+            v .: "name" <*>
+            v .: "accuracy" <*>
+            v .: "power"
+    parseJSON _ = mzero
+
+instance ToJSON MoveFull where
+    toJSON (MoveFull name acc pow) = object [
+        "name" .= name,
+        "accuracy" .= acc,
+        "power" .= power]
 
 instance FromJSON Pokemon where
     parseJSON (Object v) = Pokemon <$>
@@ -75,24 +101,4 @@ instance ToJSON Pokemon where
                         "sp_def" .= sp_def p,
                         "speed" .= speed p,
                         "moves" .= moves p]
-
-charmander = "{\"name\":\"Charmander\",\"speed\":65,\"defense\":43,\"sp_atk\":60,\"attack\":52,\"hp\":39,\"sp_def\":50}"
-
-api_base_url = "http://pokeapi.co/"
-
-construct_pokemon_url id = api_base_url ++ "api/v1/pokemon/" ++ show id ++ "/"
-
-get_pokemon :: Int -> IO (Either String Pokemon)
-get_pokemon id = fmap eitherDecode $ simpleHttp (construct_pokemon_url id)
-
-main = do pokemon_id <- randomRIO (0,251)
-          putStrLn $ "Looking up: " ++ show (pokemon_id :: Int)
-          maybe_poke <- get_pokemon pokemon_id 
-          case maybe_poke of
-            Left msg -> putStr $ "Failed to parse" ++ msg
-            Right p -> do
-              L.putStrLn $ encode p
-              putStrLn $ unpack (pokemon_name p)
-
-
 

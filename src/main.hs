@@ -1,4 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE 
+  OverloadedStrings,
+  TemplateHaskell
+  #-}
 
 module  Main where
 
@@ -13,10 +16,8 @@ import qualified Data.ByteString.Lazy as L
 import Data.Aeson
 import Network.HTTP.Conduit
 
-data MoveSummary = MoveSummary {
-   move_summary_name :: Text,
-   move_summary_uri :: Text
-} deriving (Eq, Show)
+import Data.Record
+import Data.Record.TH
 
 
 data MoveFull = MoveFull {
@@ -54,51 +55,4 @@ main = do pokemon_id <- randomRIO (0,251)
             Right p -> do
               L.putStrLn $ encode p
               putStrLn $ unpack (pokemon_name p)
-
-
-instance FromJSON MoveSummary where
-    parseJSON (Object v) = MoveSummary <$>
-            v .: "name" <*>
-            v .: "resource_uri"
-    parseJSON _ = mzero
-
-instance ToJSON MoveSummary where
-    toJSON (MoveSummary name uri) = object [
-        "name" .= name,
-        "resource_uri" .= uri]
-
-instance FromJSON MoveFull where
-    parseJSON (Object v) = MoveFull <$>
-            v .: "name" <*>
-            v .: "accuracy" <*>
-            v .: "power"
-    parseJSON _ = mzero
-
-instance ToJSON MoveFull where
-    toJSON (MoveFull name acc pow) = object [
-        "name" .= name,
-        "accuracy" .= acc,
-        "power" .= power]
-
-instance FromJSON Pokemon where
-    parseJSON (Object v) = Pokemon <$>
-                           v .: "name" <*>
-                           v .: "hp" <*>
-                           v .: "attack" <*>
-                           v .: "defense" <*>
-                           v .: "sp_atk" <*>
-                           v .: "sp_def" <*>
-                           v .: "speed" <*>
-                           v .: "moves"
-    parseJSON _ = mzero
-
-instance ToJSON Pokemon where
-    toJSON p = object [ "name" .= pokemon_name p,
-                        "hp" .= hp p,
-                        "attack" .= attack p,
-                        "defense" .= defense p,
-                        "sp_atk" .= sp_atk p,
-                        "sp_def" .= sp_def p,
-                        "speed" .= speed p,
-                        "moves" .= moves p]
 

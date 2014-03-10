@@ -1,6 +1,9 @@
 {-# LANGUAGE 
   OverloadedStrings,
-  TemplateHaskell
+  TemplateHaskell,
+  FlexibleInstances,
+  TypeFamilies,
+  TypeOperators
   #-}
 
 module  Main where
@@ -16,28 +19,42 @@ import qualified Data.ByteString.Lazy as L
 import Data.Aeson
 import Network.HTTP.Conduit
 
-import Data.Record
+import Data.Record hiding (Name)
 import Data.Record.TH
+import Data.TypeFun
+import Data.Kind
+
+import Language.Haskell.TH as TH
 
 
-data MoveFull = MoveFull {
-    move_full_name :: Text,
-    move_full_accuracy :: Int,
-    move_full_power :: Int
-}
+type Url = Text
+
+$(fields [
+        ("FakeName", [t| Text |], "name", ALL),
+        ("Resource_uri", [t| Text |], "resource_api", ALL)])
+-- type Move = X :& FName ::: Text :& Resource_uri ::: Url
+
+takle :: (X :& FakeName ::: Text :& Resource_uri ::: Text) (Id KindStar)
+takle = X :& FakeName := (pack "Tackle") :& Resource_uri := pack "/api/nope"
 
 
-data Pokemon = Pokemon {
-    pokemon_name :: Text,
-    hp :: Int,
-    attack :: Int,
-    defense :: Int,
-    sp_atk :: Int,
-    sp_def :: Int,
-    speed :: Int,
-    moves :: [MoveSummary]
-    } deriving (Eq, Show)
+-- main = TH.runQ (fields [("Power", [t| Maybe Int |], "power", ALL)]) >>= putStrLn. TH.pprint
 
+main = L.putStr $ encode takle
+{-
+type MoveFull = X 
+        :& FakeName ::: Text 
+        :& Accuracy ::: Int 
+        :& Power ::: Int 
+        :& Resource_uri ::: Url
+
+type Pokemon = X
+        :& FakeName ::: Text
+        :& Attack ::: Int
+        :& Sp_atk ::: Int
+        :& Moves ::: [Move]
+--}
+{-
 charmander = "{\"name\":\"Charmander\",\"speed\":65,\"defense\":43,\"sp_atk\":60,\"attack\":52,\"hp\":39,\"sp_def\":50}"
 
 api_base_url = "http://pokeapi.co/"
@@ -55,4 +72,4 @@ main = do pokemon_id <- randomRIO (0,251)
             Right p -> do
               L.putStrLn $ encode p
               putStrLn $ unpack (pokemon_name p)
-
+--}

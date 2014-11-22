@@ -1,4 +1,4 @@
-{-# LANGUAGE 
+{-# LANGUAGE
   OverloadedStrings,
   TemplateHaskell,
   FlexibleInstances,
@@ -84,10 +84,10 @@ set_at n (x:xs) elem = x : (set_at (n-1) xs elem)
 -- Resivoir sampleing [http://stackoverflow.com/questions/54059/efficiently-selecting-a-set-of-random-elements-from-a-linked-list]
 pick :: Int -> [a] -> IO [a]
 pick n lst = pick' n (take n lst) (drop n lst)
-    where 
+    where
         pick' :: Int -> [a] -> [a] -> IO [a]
         pick' seen resivoir [] = return resivoir
-        pick' seen resivoir (x:xs) = 
+        pick' seen resivoir (x:xs) =
             do j <- randomRIO (1, seen)
                if j < n
                then pick' (seen + 1) (set_at (j+1) resivoir x) xs
@@ -104,7 +104,7 @@ main = do pokemon_id <- randomRIO (0,251)
               putStr $ T.unpack (rGet name p)
               putStr " appeared!"
               putStrLn ""
-              
+
               learned_moves <- pick 4 (rGet moves p)
               let p' :: Pokemon
                   p' = rPut moves learned_moves p
@@ -113,7 +113,7 @@ main = do pokemon_id <- randomRIO (0,251)
 
               moves_full <- mapM (\move -> get_move (rGet resource_uri move))
                                  (rGet moves p')
-              forM_ (concat_maybes moves_full) $ \move -> 
-                  do putStr $ "Name: " 
+              forM_ (concat_maybes moves_full) $ \move ->
+                  do putStr $ "Name: "
                      T.putStrLn $ rGet name move
 --}
